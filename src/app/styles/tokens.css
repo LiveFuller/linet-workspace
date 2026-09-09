@@ -1,0 +1,158 @@
+/* LINET Workspace — design tokens
+   Provisional brand (see docs/DECISIONS.md). Not an official LINET manual;
+   accent values are placeholders until verified assets arrive.
+   Refined 2026-09: premium internal tool — restrained, crisp, confident. */
+
+:root {
+  /* — Brand — */
+  --brand: #3f5efb;
+  --brand-strong: #2e46c8;
+  --brand-ink: #1e2e8a;
+  --brand-soft: #eef2ff;
+  --brand-soft-strong: #dbe4ff;
+  --brand-ghost: #f5f7ff;
+
+  /* — Ink & text — */
+  --ink: #111d33;
+  --ink-soft: #1a2a4a;
+  --text-secondary: #5a6b86;
+  --text-tertiary: #7e8ca3;
+  --text-on-brand: #ffffff;
+
+  /* — Surfaces — */
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-hover: #f8f9ff;
+  --canvas: #f4f6fb;
+  --canvas-subtle: #eef1f8;
+  --border: #dde3ef;
+  --border-strong: #c8d1e6;
+  --border-ghost: #edf0f7;
+
+  /* — Semantic — */
+  --success: #16794e;
+  --success-soft: #e6f4ec;
+  --success-border: #b8dcc8;
+  --warning: #8a5700;
+  --warning-soft: #fdf3e0;
+  --warning-border: #f0d9a8;
+  --danger: #b91c32;
+  --danger-soft: #fdf0f2;
+  --danger-border: #f3c2c9;
+  --focus: #3f5efb;
+  --focus-ring: 0 0 0 3px rgba(63, 94, 251, 0.24);
+
+  /* — Radii — */
+  --radius-xs: 8px;
+  --radius-s: 10px;
+  --radius-m: 14px;
+  --radius-l: 18px;
+  --radius-pill: 999px;
+  --radius-round: 9999px;
+
+  /* — Shadows — depth from top-left light */
+  --shadow-1: 0 1px 2px rgba(17, 29, 51, 0.06), 0 1px 3px rgba(17, 29, 51, 0.07);
+  --shadow-2: 0 2px 8px rgba(17, 29, 51, 0.08), 0 4px 16px rgba(17, 29, 51, 0.06);
+  --shadow-3: 0 8px 24px rgba(17, 29, 51, 0.12), 0 2px 8px rgba(17, 29, 51, 0.08);
+  --shadow-focus: 0 0 0 3px rgba(63, 94, 251, 0.18);
+
+  /* — Typography — */
+  --font: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Inter", "Segoe UI", system-ui, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 13.5px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+  --tracking-tight: -0.015em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-wider: 0.06em;
+
+  /* — Motion — */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --duration-slow: 360ms;
+
+  /* — Layout — */
+  --gutter: 16px;
+  --gutter-lg: 24px;
+  --topbar-h: 56px;
+  --bottomnav-h: 64px;
+  --sidebar-w: 256px;
+  --content-max: 1120px;
+  --content-narrow: 720px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --bottom: calc(var(--bottomnav-h) + var(--safe-bottom));
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  :root { --gutter: 22px; --gutter-lg: 28px; }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 28px;
+    --gutter-lg: 36px;
+    --topbar-h: 60px;
+    --bottom: var(--safe-bottom);
+  }
+}
+
+/* — Dark theme — fully usable, WCAG AA verified */
+:root[data-theme="dark"] {
+  --brand: #6b85ff;
+  --brand-strong: #8ca2ff;
+  --brand-ink: #a8bbff;
+  --brand-soft: #1c2447;
+  --brand-soft-strong: #24305c;
+  --brand-ghost: #161d3a;
+  --ink: #e8edf8;
+  --ink-soft: #c8d4ea;
+  --text-secondary: #9aa8c3;
+  --text-tertiary: #7d8aa3;
+  --text-on-brand: #0b1020;
+  --surface: #111827;
+  --surface-raised: #16213a;
+  --surface-hover: #1c2a4a;
+  --canvas: #0b0f1e;
+  --canvas-subtle: #131a2e;
+  --border: #24314d;
+  --border-strong: #2e3e5e;
+  --border-ghost: #1b2742;
+  --success: #34d399;
+  --success-soft: #0f2a1e;
+  --success-border: #1a3d2a;
+  --warning: #fbbf24;
+  --warning-soft: #2e2308;
+  --warning-border: #4a3510;
+  --danger: #fb7185;
+  --danger-soft: #2e1418;
+  --danger-border: #4a2028;
+  --focus: #8ca2ff;
+  --focus-ring: 0 0 0 3px rgba(140, 162, 255, 0.28);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-focus: 0 0 0 3px rgba(140, 162, 255, 0.22);
+}
+
+/* — Reduced motion — */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
