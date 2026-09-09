@@ -17,7 +17,7 @@ export default defineConfig({
     timezoneId: "Europe/Prague",
   },
   webServer: {
-    command: `npm run preview -- --port ${PORT} --strictPort`,
+    command: `npm run preview -- --port ${PORT} --strictPort --base /linetapp/`,
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: true,
     timeout: 120_000,
