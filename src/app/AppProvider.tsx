@@ -114,12 +114,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setSnapshot(snap.data);
         // restore persona if stored
         const savedId = localStorage.getItem(PERSONA_KEY);
-        if (r.mode === "local" && savedId) {
-          const p = snap.data.people.find((x) => x.id === savedId) ?? null;
+        if (r.mode === "local") {
+          const p = snap.data.people.find((x) => x.id === savedId)
+            ?? snap.data.people.find((x) => x.role === "it_coordinator")
+            ?? snap.data.people[0] ?? null;
           if (p) {
             const local = r as unknown as { setPersona?: (p: Person | null) => void };
             local.setPersona?.(p);
             setPersonaState(p);
+            localStorage.setItem(PERSONA_KEY, p.id);
           }
         }
       } else {

@@ -123,5 +123,5 @@ export async function getMeta<T>(db: AppDB, key: string): Promise<T | undefined>
 }
 
 export async function setMeta(db: AppDB, key: string, value: unknown) {
-  await db.put("meta", { key, value });
+  await db.put("meta", { key, value }, key);
 }

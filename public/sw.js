@@ -8,7 +8,7 @@
  * the Cache API is not guaranteed durable without a persistent-storage grant.
  */
 
-const CACHE_NAME = "linet-ws-v1";
+const CACHE_NAME = "linet-ws-v2";
 const BASE = "/linetapp";
 const SHELL_URLS = [`${BASE}/`, `${BASE}/index.html`, `${BASE}/manifest.webmanifest`];
 
@@ -27,7 +27,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
+      await Promise.all(keys.filter((k) => k.startsWith("linet-ws-") && k !== CACHE_NAME).map((k) => caches.delete(k)));
       await self.clients.claim();
     })(),
   );
@@ -45,6 +45,7 @@ self.addEventListener("fetch", (event) => {
 
   // Skip cross-origin requests entirely.
   if (url.origin !== self.location.origin) return;
+  if (url.pathname !== BASE && !url.pathname.startsWith(`${BASE}/`)) return;
 
   // Network-first for API calls.
   if (url.pathname.startsWith("/api/")) {
