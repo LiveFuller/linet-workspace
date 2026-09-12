@@ -40,7 +40,6 @@ export default function TasksPage() {
   useEffect(() => {
     const q = params.get("q") ?? "";
     setQuery((prev) => (prev !== q ? q : prev));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.get("q")]);
 
   const setParam = (key: string, value: string | null) => {

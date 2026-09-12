@@ -23,7 +23,6 @@ class MissingConfigRepository implements WorkspaceRepository {
   private notConfigured(): ServiceResult<never> {
     return { ok: false, error: { code: "not_configured", capability: "supabase", message: this.msg } };
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async ready(): Promise<ServiceResult<null>> { return this.notConfigured() as ServiceResult<null>; }
   async loadSnapshot(): Promise<ServiceResult<DataSnapshot>> { return this.notConfigured() as ServiceResult<DataSnapshot>; }
   subscribe(): () => void { return () => undefined; }

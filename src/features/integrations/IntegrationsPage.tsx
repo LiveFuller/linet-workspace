@@ -41,6 +41,10 @@ export default function IntegrationsPage() {
       <h1 className="page-title">{t.integrations_title}</h1>
 
       <div className="banner banner-info small mb-12" role="note">
+        <strong style={{ display: "block", marginBottom: 4 }}>Microsoft 365 — doplněk, ne náhrada · Microsoft 365 — complement, not replacement</strong>
+        Workspace nenahrazuje Teams ani Planner/To Do. Teams zůstává systémem záznamu; Workspace je offline koordinační vrstva pro field (přepis → návrh → schválení → volitelný push do Planner přes Graph). / Workspace does not replace Teams or Planner/To Do. Teams remains system of record; Workspace is an offline coordination layer (transcript → proposal → approval → optional push to Planner via Graph).
+      </div>
+      <div className="banner banner-info small mb-12" role="note">
         {t.integrations_ms_note}
       </div>
       <div className="banner banner-warn small mb-16" role="note">

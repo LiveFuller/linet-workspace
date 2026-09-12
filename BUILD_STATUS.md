@@ -71,46 +71,53 @@ All slices below deliver end-to-end in **local demo mode** (`VITE_DATA_MODE=loca
 
 | Severity | Area | Defect | Where | Workaround until fix | Reversible fix outline |
 |---|---|---|---|---|---|
-| **Critical** | Touch / hit target | Some bottom-nav and icon buttons below 44×44 accessible hit-area (WCAG 2.5.5) | `src/app/Shell.tsx:103-115` `.icon-btn`, `src/app/styles/base.css` | Sidebar on desktop unaffected; mobile pass with accessibility overlay next sprint | Increase `min-height/min-width: 44px`, `touch-action: manipulation` |
-| **Critical** | Keyboard | Focus ring suppressed for mouse users (`body:not(.using-keyboard)`) but visible focus on `Tab` detection is fragile; modal close on `Esc` exists `src/components/Modal.tsx` but focus trap not present | `src/app/AppProvider.tsx:74-83` `src/components/Modal.tsx` | `skip-link` `src/app/Shell.tsx:197` works; tab through forms does cycle | Add `focus-trap-react` to `Modal`, `outline: 2px solid var(--focus)` `tokens.css:19` always for keyboard |
-| **High** | Calendar delete | `EventForm` Delete button calls `deleteEvent()` immediately without confirmation `src/features/calendar/CalendarPage.tsx:170-175,318-319` | `src/features/calendar/CalendarPage.tsx:318` | Small dataset; undo via recreating with same linked task | Mirror task `task_delete_confirm` pattern `src/locales/strings.ts:80` → `confirm()` or soft-delete |
-| **High** | Tests suite | `vitest` `include: tests/unit/**/*.test.{ts,tsx}` `vitest.config.ts:15` — empty checkout (`No test files found` on `npm run test`) | `vitest.config.ts:15` | Manual coverage via `TEST_RESULTS.md` journeys A–N | Add `tests/unit/selectors.test.ts` + `tests/unit/permissions.test.ts` (3–5 targeted cases) |
-| **High** | E2E | Playwright expects `preview` on 4173 `playwright.config.ts:19-23` and `chromium` installed — not run in this checkout (`npm run e2e:install` needed) | `playwright.config.ts:25-27` | Manual mobile/desktop verified via viewport resize + `tokens.css:41-50` breakpoints | CI step: `e2e:install && preview && playwright test` |
+| ~~Critical~~ ✅ | Touch / hit target | RESOLVED 2026-09-12: 44×44 min hit-area + `touch-action: manipulation` on `.icon-btn`, bottom-nav, sidebar links | `src/app/styles/base.css` | — | Done |
+| ~~Critical~~ ✅ | Keyboard / modal | RESOLVED 2026-09-12: focus trap in `Modal` (Tab cycle + `inert`/`aria-hidden` on `#main-content`, restore on close) | `src/components/Modal.tsx` | — | Done |
+| ~~High~~ ✅ | Calendar delete | RESOLVED: `EventForm` delete opens a confirm modal (`confirmOpen` state) before `deleteEvent()` | `src/features/calendar/CalendarPage.tsx` | — | Done |
+| ~~High~~ ✅ | Tests suite | RESOLVED: 129 unit tests in `tests/domain/*` (selectors, permissions, dates, transcript, repository contract) — `npm test` green | `vitest.config.ts` | — | Done |
+| ~~High~~ ✅ | E2E | RESOLVED: `tests/e2e/startup.spec.ts` (mobile Pixel 7 + desktop, deep links under `/linetapp/`) — `npm run e2e` green; preview server must run with `--base /linetapp/` (a bare `vite preview` serves `/` and 404-falls-back to index.html) | `playwright.config.ts:19-23` | — | Done |
 | **Medium** | Upload parsing | Paste intake stores entire body; very large transcript (>200k) already rejected by `inboxItemSchema` `src/domain/validation.ts:85` but UX no streaming feedback | `src/domain/transcript.ts:80-84` `src/features/meetings/MeetingDetailPage.tsx:34-50` | Hint `inbox_try_sample` + `SAMPLE_SRT`; large-file note `storage_full` `src/locales/strings.ts:454` | Add `maxLength` counter + progress indicator |
 | **Medium** | Notifications | Toast duplicate suppression via `dedupeKey` `src/domain/selectors.ts:180` but `notificationDedupeKey` not deduping toasts across tabs (BroadcastChannel only notifies listeners, not toasts) | `src/data/local/LocalRepository.ts:144-159` `src/components/Toaster.tsx` | Interaction still correct; duplicates rare with derived dedupe | Share dedupe via `BroadcastChannel` toast channel |
-| **Medium** | Bundle size | `index-CFIezvhs.js 536.74 kB` flagged "Some chunks larger than 500 kB" (Vite warn) — `zod` + large page components bundled together `vite.config.ts:13-22` | `vite.config.ts:17-19` `package.json:27` `zod:^4.0.0` | gzip 150 kB acceptable for demo | Dynamic import routes (`import("@/features/reports/...")`) + split `zod`/`transcript` chunks |
+| **Medium** | Bundle size | `index-*.js 609 kB` flagged "Some chunks larger than 500 kB" (Vite warn) — `zod` + large page components bundled together `vite.config.ts:13-22` | `vite.config.ts:17-19` `package.json:27` `zod:^4.0.0` | gzip 165 kB acceptable for demo | Dynamic import routes (`import("@/features/reports/...")`) + split `zod`/`transcript` chunks |
 | **Low** | Tokens | Palette `--brand #4263eb` provisional `src/app/styles/tokens.css:5` — awaiting official manual | `src/app/styles/tokens.css:1-3` header | Labeled provisional honestly | Swap `tokens.css` when manual provided |
-| **Low** | Vite base | `base: "/"` `vite.config.ts:7` blocks deployment to sub-path `/linetapp` until polish (next action) | `vite.config.ts:7` | Demo on root `localhost:5173` correct | Set `base: "/linetapp/"` + verify asset paths |
+| ~~Low~~ ✅ | Vite base | RESOLVED: `base` is `/linetapp/` for local builds, `/` on Vercel, `VITE_BASE` override supported; `BrowserRouter` basename + SW scope derived from `BASE_URL` (`src/app/main.tsx:11,28`) | `vite.config.ts:12` `src/app/main.tsx` | — | Done |
 
 No spec-violating defects hidden — all above are filed and reversible.
 
 ---
 
-## Next Concrete Action — Polish Shell + Deploy to `/linetapp`
+## Next Concrete Action — Reduce Bundle + Supabase Live Wiring Prep
+
+> Previous action (polish shell + `/linetapp` sub-path deploy) completed 2026-09-12: 44×44 targets, modal focus trap + inert, delete confirms, `base: /linetapp/`, e2e green. Full verification: `typecheck` ✅ `build` ✅ `lint` ✅ `test` (129) ✅ `e2e` (mobile+desktop) ✅.
 
 ### Single action (do exactly this next)
 
-**Polish shell navigation + deploy preview to sub-path `/linetapp`.**
+**Code-split the 609 kB index chunk, then prepare live Supabase wiring.**
 
 **Steps:**
 
-1. **Shell polish** (30m)
-   - Increase `.icon-btn` touch target to 44×44 in `src/app/styles/base.css` and verify `BottomNav` hit-area `src/app/Shell.tsx:135-163`.
-   - Add focus trap to `src/components/Modal.tsx` (light `focus-trap-react` or native `inert` + `aria-modal`) and keep `skip-link` `src/app/Shell.tsx:197`; validate with `Tab` + `Esc`.
-   - Add calendar delete confirmation matching `task_delete_confirm` `src/locales/strings.ts:80` in `src/features/calendar/CalendarPage.tsx:318`, analogous guard for `removeChecklistItem` / `deleteTask`.
+1. **Route-level code splitting** (45m)
+   - Convert static page imports in `src/app/routes.tsx:6-31` to `React.lazy` + `Suspense` (fallback to existing `SkeletonStack`/loading state).
+   - Keep `TodayPage` static (first paint); split heavy pages first: `MeetingDetailPage`, `ReportsPage`/`ReportDetailPage`, `LearningModulePage`, `SupportDetailPage`.
+   - Target: no chunk > 500 kB (`build.chunkSizeWarningLimit` stays default), verify `vendor`/`supabase` chunks unchanged `vite.config.ts:22-24`.
 
-2. **Sub-path deploy config** (10m)
-   - In `vite.config.ts:7` set `base: "/linetapp/"` (currently `"/"`). Keep `resolve.alias` and `manualChunks`.
-   - In `src/app/routes.tsx` confirm `basename` not lost (React Router v7 respects Vite `base` for asset resolution; no code change expected, verified by existing `base: "/"` assumption). Test deep links `src/app/routes.tsx:55-81` via preview (`npm run build && npm run preview -- --port 4173` `package.json:10-11`) — direct navigate to `/linetapp/meetings` must load.
-   - Update `public` asset references if moved (e.g. logo, if present — currently none).
+2. **Supabase live wiring prep** (30m)
+   - Collect credentials (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) — `src/features/liveconfig/LiveConfigPage.tsx` must guide this.
+   - Run `supabase/setup.sql` against the project; verify with `npm run sql:verify-setup`.
+   - Smoke `VITE_DATA_MODE=supabase npm run dev` — honest `not_configured` errors must surface, never silent demo fallback `src/data/supabase/SupabaseRepository.ts:20-76`.
 
-3. **Verify & publish** (20m)
-   - `npm run typecheck` → exit 0
-   - `npm run build` → confirm `dist/index.html` contains `<script src="/linetapp/assets/…">` and no 404 on `preview --base /linetapp/`.
-   - Smoke the shell-pushed build on device width 360 (`Pixel 7` `playwright.config.ts:26`) + desktop.
+3. **Verify** (15m)
+   - `npm run typecheck && npm run build` — check chunk sizes in output.
+   - `npm test && npm run e2e` — both green.
+   - Deep links still work: `/linetapp/meetings` direct load via preview.
 
 **Exit criteria:**
 
-- `npm run typecheck` ✅, `npm run build` ✅ (assets under `/linetapp/`), `/linetapp/` root + `/linetapp/meetings` direct load ✅, bottom nav 44×44 ✅, `Esc` closes modal + focus trap ✅, calendar delete confirm ✅.
+- No chunk > 500 kB in build output ✅, all tests green ✅, Supabase config screen reachable and honest ✅.
 
-**After this**, the subsequent concrete increment is wiring the test/regression suite (`tests/unit/selectors.test.ts` + `permissions.test.ts`) to turn `TEST_RESULTS.md` journeys A–N from manual to green CI, before enabling live Supabase wiring.
+---
+
+## History of completed actions
+
+- 2026-09-08 — Initial vertical slices (see "Completed Vertical Slices" above).
+- 2026-09-12 — Polish shell (44×44 touch targets `base.css`, modal focus trap + `inert` `Modal.tsx`, delete confirms calendar/tasks) + `/linetapp/` sub-path deploy (`vite.config.ts:12`, `main.tsx:11` basename, SW scope) + lint config fix (Node globals for `scripts/*.mjs`) + e2e suite green under sub-path.

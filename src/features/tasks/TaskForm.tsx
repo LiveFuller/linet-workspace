@@ -2,7 +2,7 @@
 // ~10 second capture. Owner defaults to current user; unassigned allowed.
 // Templates create tasks with a ready checklist.
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/app/AppProvider";
 import { useToast } from "@/components/Toaster";
 import { EmptyState } from "@/components/primitives";
@@ -13,7 +13,6 @@ export default function TaskForm() {
   const { snapshot, persona, t, prefs, repo, refresh } = useApp();
   const { toast } = useToast();
   const nav = useNavigate();
-  const [_params] = useSearchParams();
   const { taskId } = useParams(); // edit mode when present
   const editing = Boolean(taskId);
 

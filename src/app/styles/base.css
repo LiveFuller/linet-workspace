@@ -88,9 +88,10 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 40px; height: 40px; border: none;
+  width: 44px; height: 44px; min-width: 44px; min-height: 44px; border: none;
   background: transparent; color: var(--ink);
   border-radius: var(--radius-round); cursor: pointer; position: relative; flex-shrink: 0;
+  touch-action: manipulation;
   transition: background var(--duration-fast) var(--ease), transform var(--duration-fast) var(--ease-spring);
 }
 .icon-btn:hover { background: var(--brand-ghost); }
@@ -143,9 +144,10 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 }
 .bottom-nav a, .bottom-nav button {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; min-height: 44px; color: var(--text-secondary);
+  gap: 3px; min-height: 44px; min-width: 44px; color: var(--text-secondary);
   text-decoration: none; font-size: 11px; font-weight: 650; letter-spacing: 0.01em;
   padding: 8px 2px 6px; background: transparent; border: none; cursor: pointer;
+  touch-action: manipulation;
   transition: color var(--duration-fast) var(--ease);
 }
 .bottom-nav a:hover, .bottom-nav button:hover { text-decoration: none; color: var(--ink); }
@@ -180,7 +182,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
     display: flex; align-items: center; gap: 10px;
     padding: 9px 12px; border-radius: var(--radius-s);
     color: var(--ink); text-decoration: none; font-size: 13.5px; font-weight: 550;
-    min-height: 40px; transition: all var(--duration-fast) var(--ease);
+    min-height: 44px; touch-action: manipulation; transition: all var(--duration-fast) var(--ease);
     position: relative;
   }
   .sidebar a:hover { background: var(--brand-ghost); text-decoration: none; }

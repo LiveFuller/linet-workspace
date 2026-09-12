@@ -183,8 +183,8 @@ export default function TaskDetailPage() {
               </span>
               {editable && (
                 <button
-                  className="icon-btn" style={{ width: 36, height: 36 }} aria-label={t.delete}
-                  onClick={async () => { await repo!.removeChecklistItem(it.id, persona.id); refresh(); }}
+                  className="icon-btn" style={{ width: 44, height: 44, minWidth: 44, minHeight: 44 }} aria-label={t.delete}
+                  onClick={async () => { if (!window.confirm(`${t.delete} — ${it.title}?`)) return; await repo!.removeChecklistItem(it.id, persona.id); refresh(); }}
                 >✕</button>
               )}
             </li>
