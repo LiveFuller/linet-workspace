@@ -29,6 +29,12 @@ import SearchPage from "@/features/search/SearchPage";
 import MorePage from "@/features/more/MorePage";
 import NotFoundPage from "@/features/NotFoundPage";
 import LiveConfigPage from "@/features/liveconfig/LiveConfigPage";
+import WaygoOwnerDashboard from "@/features/waygo/WaygoOwnerDashboard";
+import WaygoHotelsPage from "@/features/waygo/WaygoHotelsPage";
+import WaygoHotelDetailPage from "@/features/waygo/WaygoHotelDetailPage";
+import WaygoQrPrintPage from "@/features/waygo/WaygoQrPrintPage";
+import WaygoOutreachDashboard from "@/features/waygo/WaygoOutreachDashboard";
+import WaygoRedirectPage from "@/features/waygo/WaygoRedirectPage";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return <AppShell routes={children} />;
@@ -54,6 +60,13 @@ export function AppRoutes() {
   return (
     <Routes location={loc}>
       <Route element={<Shell><TodayPage /></Shell>} path="/" />
+      {/* Waygo engine */}
+      <Route element={<Shell><WaygoOwnerDashboard /></Shell>} path="/waygo" />
+      <Route element={<Shell><WaygoHotelsPage /></Shell>} path="/waygo/hotels" />
+      <Route element={<Shell><WaygoHotelDetailPage /></Shell>} path="/waygo/hotels/:hotelId" />
+      <Route element={<WaygoQrPrintPage />} path="/waygo/hotels/:hotelId/qr" />
+      <Route element={<Shell><WaygoOutreachDashboard /></Shell>} path="/waygo/outreach" />
+      <Route element={<WaygoRedirectPage />} path="/r/:slug" />
       <Route element={<Shell><TasksPage /></Shell>} path="/tasks" />
       <Route element={<Shell><TaskForm /></Shell>} path="/tasks/new" />
       <Route element={<Shell><TaskDetailPage /></Shell>} path="/tasks/:taskId" />

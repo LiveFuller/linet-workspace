@@ -14,12 +14,17 @@ import type {
   TaskChecklistItem, TaskComment, TrainingProgress,
   TranscriptSegment, UUID,
 } from "@/domain/types";
+import type {
+  WaygoHotel, WaygoReceptionCode, WaygoScan, WaygoBooking, WaygoOutreach, WaygoProvider,
+} from "@/domain/waygo";
 import { can, canPerson, canUpdateTask } from "@/domain/permissions";
 import {
   calendarEventSchema, inboxItemSchema, meetingSchema, proposalSchema,
   reportScheduleSchema, supportTicketSchema, taskDraftSchema, taskUpdateSchema,
+  waygoHotelDraftSchema, waygoReceptionCodeDraftSchema, waygoOutreachDraftSchema,
 } from "@/domain/validation";
 import { sha256Hex, uuid } from "@/lib/utils";
+import { slugify, generateReceptionCode, hotelQrSlug } from "@/lib/waygoSlug";
 
 type Ok<T> = { ok: true; data: T };
 const ok = <T>(data: T): Ok<T> => ({ ok: true, data });
@@ -98,6 +103,14 @@ export class LocalRepository implements WorkspaceRepository {
     await putAll(db, "documents", seed.documents);
     await putAll(db, "notifications", seed.notifications);
     await putAll(db, "activity", seed.activity);
+    // Waygo seed
+    const waygoSeed = (seed as unknown as { waygoHotels?: WaygoHotel[]; waygoCodes?: WaygoReceptionCode[]; waygoScans?: WaygoScan[]; waygoBookings?: WaygoBooking[]; waygoOutreach?: WaygoOutreach[]; waygoProviders?: WaygoProvider[] });
+    if (waygoSeed.waygoHotels) await putAll(db, "waygoHotels", waygoSeed.waygoHotels);
+    if (waygoSeed.waygoCodes) await putAll(db, "waygoCodes", waygoSeed.waygoCodes);
+    if (waygoSeed.waygoScans) await putAll(db, "waygoScans", waygoSeed.waygoScans);
+    if (waygoSeed.waygoBookings) await putAll(db, "waygoBookings", waygoSeed.waygoBookings);
+    if (waygoSeed.waygoOutreach) await putAll(db, "waygoOutreach", waygoSeed.waygoOutreach);
+    if (waygoSeed.waygoProviders) await putAll(db, "waygoProviders", waygoSeed.waygoProviders);
     await setMeta(db, "seedVersion", SEED_VERSION);
     await setMeta(db, "referenceDate", seed.referenceDate);
     this.notify();
@@ -112,6 +125,7 @@ export class LocalRepository implements WorkspaceRepository {
         templates, events, inbox, meetings, transcripts, proposals, decisions,
         reports, schedules, modules, trainingProgress, supportTickets,
         supportUpdates, documents, notifications, activity,
+        waygoHotels, waygoCodes, waygoScans, waygoBookings, waygoOutreach, waygoProviders,
       ] = await Promise.all([
         getAll(db, "people"), getAll(db, "projects"), getAll(db, "workstreams"),
         getAll(db, "labels"), getAll(db, "tasks"), getAll(db, "checklistItems"),
@@ -121,6 +135,7 @@ export class LocalRepository implements WorkspaceRepository {
         getAll(db, "schedules"), getAll(db, "modules"), getAll(db, "trainingProgress"),
         getAll(db, "supportTickets"), getAll(db, "supportUpdates"),
         getAll(db, "documents"), getAll(db, "notifications"), getAll(db, "activity"),
+        getAll(db, "waygoHotels"), getAll(db, "waygoCodes"), getAll(db, "waygoScans"), getAll(db, "waygoBookings"), getAll(db, "waygoOutreach"), getAll(db, "waygoProviders"),
       ]);
       // Privacy: support records are filtered per-persona at selector level;
       // screens apply canViewSupportTicket. Demo switcher is simulation, not auth.
@@ -129,6 +144,7 @@ export class LocalRepository implements WorkspaceRepository {
         templates, events, inbox, meetings, transcripts, proposals, decisions,
         reports, schedules, modules, trainingProgress, supportTickets,
         supportUpdates, documents, notifications, activity,
+        waygoHotels, waygoCodes, waygoScans, waygoBookings, waygoOutreach, waygoProviders,
       };
       return ok(snap);
     } catch (e) {
@@ -826,6 +842,312 @@ export class LocalRepository implements WorkspaceRepository {
     } catch (e) {
       return fail({ code: "unknown", message: e instanceof Error ? e.message : String(e) });
     }
+  }
+
+  // ---------------- Waygo ----------------
+  async createWaygoHotel(input: unknown, _actorId: UUID): Promise<ServiceResult<WaygoHotel>> {
+    return this.withTx(async () => {
+      const parsed = waygoHotelDraftSchema.safeParse(input);
+      if (!parsed.success) this.appErr({ code: "validation", issues: parsed.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })) });
+      const d = parsed.data!;
+      const existing = await getAll(this.db!, "waygoHotels");
+      const existingSlugs = new Set(existing.map((h) => h.slug));
+      const existingQr = new Set(existing.map((h) => h.slugQr));
+      const slug = d.slug ?? (() => {
+        const base = slugify(d.name);
+        let s = base;
+        let n = 2;
+        while (existingSlugs.has(s)) { s = `${base}-${n}`; n++; }
+        return s;
+      })();
+      if (existingSlugs.has(slug)) this.appErr({ code: "conflict", message: `Slug ${slug} already exists` });
+      let qr = hotelQrSlug(slug);
+      let guard = 0;
+      while (existingQr.has(qr) && guard < 50) { qr = hotelQrSlug(slug); guard++; }
+      const now = this.now();
+      // resolve workspace/project from d.projectId
+      const project = await this.db!.get("projects", d.projectId);
+      if (!project) this.appErr({ code: "not_found" });
+      let workspaceId = (project as unknown as { workspaceId: string }).workspaceId;
+      if (!workspaceId) {
+        workspaceId = d.projectId; // local demo: workspace == project
+      }
+      const hotel: WaygoHotel = {
+        id: uuid(),
+        workspaceId: workspaceId ?? d.projectId,
+        projectId: d.projectId,
+        name: d.name,
+        slug,
+        address: d.address ?? "",
+        area: d.area ?? "Praha 1",
+        stars: d.stars ?? null,
+        rooms: d.rooms ?? null,
+        contactName: d.contactName ?? null,
+        contactEmail: d.contactEmail ?? null,
+        contactPhone: d.contactPhone ?? null,
+        status: d.status ?? "prospect",
+        commissionHotelPct: d.commissionHotelPct ?? 10,
+        commissionReceptionPct: d.commissionReceptionPct ?? 3,
+        slugQr: qr,
+        ownerId: d.ownerId ?? null,
+        notes: d.notes ?? null,
+        scansTotal: 0,
+        bookingsTotal: 0,
+        revenueCzkTotal: 0,
+        createdAt: now,
+        updatedAt: now,
+        installedAt: null,
+        liveAt: null,
+      };
+      await this.db!.put("waygoHotels", hotel);
+      // auto-create shared reception code
+      const codeStr = generateReceptionCode(new Set());
+      const shared: WaygoReceptionCode = {
+        id: uuid(),
+        hotelId: hotel.id,
+        code: codeStr,
+        displayName: "Recepce / Front desk",
+        slug: `${slug}-${codeStr.toLowerCase()}`,
+        type: "hotel_shared",
+        personName: null,
+        scansTotal: 0,
+        bookingsTotal: 0,
+        revenueCzkTotal: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await this.db!.put("waygoCodes", shared);
+      this.notify();
+      return hotel;
+    });
+  }
+
+  async updateWaygoHotel(id: string, patch: Partial<WaygoHotel>, _actorId: UUID): Promise<ServiceResult<WaygoHotel>> {
+    return this.withTx(async () => {
+      const h = await this.db!.get("waygoHotels", id);
+      if (!h) this.appErr({ code: "not_found" });
+      const next: WaygoHotel = { ...h, ...patch, id: h.id, updatedAt: this.now() } as WaygoHotel;
+      if (patch.status === "installed" && !h.installedAt) next.installedAt = this.now();
+      if (patch.status === "live" && !h.liveAt) next.liveAt = this.now();
+      await this.db!.put("waygoHotels", next);
+      this.notify();
+      return next;
+    });
+  }
+
+  async deleteWaygoHotel(id: string, _actorId: UUID): Promise<ServiceResult<null>> {
+    return this.withTx(async () => {
+      const h = await this.db!.get("waygoHotels", id);
+      if (!h) this.appErr({ code: "not_found" });
+      await this.db!.delete("waygoHotels", id);
+      const codes = await this.db!.getAllFromIndex("waygoCodes", "by-hotel", id);
+      for (const c of codes) await this.db!.delete("waygoCodes", c.id);
+      const scans = await this.db!.getAllFromIndex("waygoScans", "by-hotel", id);
+      for (const s of scans) await this.db!.delete("waygoScans", s.id);
+      const bookings = await this.db!.getAllFromIndex("waygoBookings", "by-hotel", id);
+      for (const b of bookings) await this.db!.delete("waygoBookings", b.id);
+      const outreach = await this.db!.getAllFromIndex("waygoOutreach", "by-hotel", id);
+      for (const o of outreach) await this.db!.delete("waygoOutreach", o.id);
+      this.notify();
+      return null;
+    });
+  }
+
+  async createWaygoCode(input: unknown, _actorId: UUID): Promise<ServiceResult<WaygoReceptionCode>> {
+    return this.withTx(async () => {
+      const parsed = waygoReceptionCodeDraftSchema.safeParse(input);
+      if (!parsed.success) this.appErr({ code: "validation", issues: parsed.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })) });
+      const d = parsed.data!;
+      const hotel = await this.db!.get("waygoHotels", d.hotelId);
+      if (!hotel) this.appErr({ code: "not_found" });
+      const existing = await this.db!.getAllFromIndex("waygoCodes", "by-hotel", d.hotelId);
+      const codesSet = new Set(existing.map((c) => c.code));
+      const codeStr = d.code ?? generateReceptionCode(codesSet);
+      if (codesSet.has(codeStr)) this.appErr({ code: "conflict", message: `Code ${codeStr} already exists for this hotel` });
+      const now = this.now();
+      const rec: WaygoReceptionCode = {
+        id: uuid(),
+        hotelId: d.hotelId,
+        code: codeStr,
+        displayName: d.displayName,
+        slug: `${hotel.slug}-${codeStr.toLowerCase()}`,
+        type: d.type ?? "personal",
+        personName: d.personName ?? null,
+        scansTotal: 0,
+        bookingsTotal: 0,
+        revenueCzkTotal: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await this.db!.put("waygoCodes", rec);
+      this.notify();
+      return rec;
+    });
+  }
+
+  async deleteWaygoCode(id: string, _actorId: UUID): Promise<ServiceResult<null>> {
+    return this.withTx(async () => {
+      const c = await this.db!.get("waygoCodes", id);
+      if (!c) this.appErr({ code: "not_found" });
+      await this.db!.delete("waygoCodes", id);
+      this.notify();
+      return null;
+    });
+  }
+
+  async recordWaygoScan(slug: string, meta: { ipHash?: string | null; userAgent?: string | null; referrer?: string | null; country?: string | null }): Promise<ServiceResult<WaygoScan>> {
+    return this.withTx(async () => {
+      const hotels = await getAll(this.db!, "waygoHotels");
+      const codes = await getAll(this.db!, "waygoCodes");
+      // resolve by slugQr or code slug
+      let hotel: WaygoHotel | undefined = hotels.find((h) => h.slugQr === slug || h.slug === slug);
+      const code: WaygoReceptionCode | undefined = codes.find((c) => c.slug === slug);
+      if (code) {
+        hotel = hotels.find((h) => h.id === code!.hotelId);
+      }
+      if (!hotel) {
+        // fallback: try prefix match
+        hotel = hotels.find((h) => slug.startsWith(h.slug));
+      }
+      if (!hotel) this.appErr({ code: "not_found" });
+      const codeId = code?.id ?? (await this.db!.getAllFromIndex("waygoCodes", "by-hotel", hotel.id))[0]?.id ?? null;
+      const scan: WaygoScan = {
+        id: uuid(),
+        hotelId: hotel.id,
+        codeId,
+        slug,
+        scannedAt: this.now(),
+        ipHash: meta.ipHash ?? null,
+        userAgent: meta.userAgent ?? null,
+        referrer: meta.referrer ?? null,
+        convertedToBooking: false,
+        country: meta.country ?? null,
+      };
+      await this.db!.put("waygoScans", scan);
+      // bump counters
+      const updatedHotel: WaygoHotel = { ...hotel, scansTotal: (hotel.scansTotal ?? 0) + 1, updatedAt: this.now() };
+      await this.db!.put("waygoHotels", updatedHotel);
+      if (codeId) {
+        const c = await this.db!.get("waygoCodes", codeId);
+        if (c) await this.db!.put("waygoCodes", { ...c, scansTotal: (c.scansTotal ?? 0) + 1, updatedAt: this.now() });
+      }
+      this.notify();
+      return scan;
+    });
+  }
+
+  async createWaygoBooking(input: { hotelId: string; codeId?: string | null; slug: string; experienceTitle: string; amountCzk: number; guestCountry?: string | null }, _actorId: UUID): Promise<ServiceResult<WaygoBooking>> {
+    return this.withTx(async () => {
+      const hotel = await this.db!.get("waygoHotels", input.hotelId);
+      if (!hotel) this.appErr({ code: "not_found" });
+      const commission = Math.round(input.amountCzk * (hotel.commissionHotelPct / 100));
+      const booking: WaygoBooking = {
+        id: uuid(),
+        hotelId: input.hotelId,
+        codeId: input.codeId ?? null,
+        slug: input.slug,
+        experienceSlug: null,
+        experienceTitle: input.experienceTitle,
+        amountCzk: input.amountCzk,
+        commissionCzk: commission,
+        guestCountry: input.guestCountry ?? null,
+        status: "confirmed",
+        bookedAt: this.now(),
+        createdAt: this.now(),
+      };
+      await this.db!.put("waygoBookings", booking);
+      // bump hotel
+      await this.db!.put("waygoHotels", {
+        ...hotel,
+        bookingsTotal: (hotel.bookingsTotal ?? 0) + 1,
+        revenueCzkTotal: (hotel.revenueCzkTotal ?? 0) + commission,
+        updatedAt: this.now(),
+      });
+      if (input.codeId) {
+        const code = await this.db!.get("waygoCodes", input.codeId);
+        if (code) await this.db!.put("waygoCodes", { ...code, bookingsTotal: (code.bookingsTotal ?? 0) + 1, revenueCzkTotal: (code.revenueCzkTotal ?? 0) + commission, updatedAt: this.now() });
+      }
+      // mark recent scan as converted
+      const scans = await this.db!.getAllFromIndex("waygoScans", "by-hotel", input.hotelId);
+      const recent = scans.sort((a, b) => b.scannedAt.localeCompare(a.scannedAt))[0];
+      if (recent && !recent.convertedToBooking) {
+        await this.db!.put("waygoScans", { ...recent, convertedToBooking: true });
+      }
+      this.notify();
+      return booking;
+    });
+  }
+
+  async createWaygoOutreach(input: unknown, _actorId: UUID): Promise<ServiceResult<WaygoOutreach>> {
+    return this.withTx(async () => {
+      const persona = this.requirePersona();
+      const parsed = waygoOutreachDraftSchema.safeParse(input);
+      if (!parsed.success) this.appErr({ code: "validation", issues: parsed.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })) });
+      const d = parsed.data!;
+      const hotel = await this.db!.get("waygoHotels", d.hotelId);
+      if (!hotel) this.appErr({ code: "not_found" });
+      const now = this.now();
+      const outreach: WaygoOutreach = {
+        id: uuid(),
+        hotelId: d.hotelId,
+        kind: d.kind ?? "email",
+        subject: d.subject,
+        body: d.body,
+        aiDraft: null,
+        outcome: d.outcome ?? null,
+        nextFollowUpAt: d.nextFollowUpAt ?? null,
+        createdBy: persona.id,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await this.db!.put("waygoOutreach", outreach);
+      this.notify();
+      return outreach;
+    });
+  }
+
+  async updateWaygoOutreach(id: string, patch: Partial<WaygoOutreach>, _actorId: UUID): Promise<ServiceResult<WaygoOutreach>> {
+    return this.withTx(async () => {
+      const o = await this.db!.get("waygoOutreach", id);
+      if (!o) this.appErr({ code: "not_found" });
+      const next = { ...o, ...patch, id: o.id, updatedAt: this.now() } as WaygoOutreach;
+      await this.db!.put("waygoOutreach", next);
+      this.notify();
+      return next;
+    });
+  }
+
+  async createWaygoProvider(input: unknown, _actorId: UUID): Promise<ServiceResult<WaygoProvider>> {
+    return this.withTx(async () => {
+      const raw = input as Record<string, unknown>;
+      if (!raw.businessName || !raw.email) this.appErr({ code: "validation", issues: [{ path: "businessName", message: "Required" }] });
+      const projectId = raw.projectId as string;
+      const project = await this.db!.get("projects", projectId as string);
+      if (!project) this.appErr({ code: "not_found" });
+      const workspaceId = (project as unknown as { workspaceId?: string })?.workspaceId ?? projectId;
+      const now = this.now();
+      const prov: WaygoProvider = {
+        id: uuid(),
+        businessName: String(raw.businessName),
+        ico: raw.ico ? String(raw.ico) : null,
+        category: String(raw.category ?? "Guided Tour / River"),
+        address: String(raw.address ?? ""),
+        area: (raw.area as WaygoProvider["area"]) ?? "Praha 1",
+        priceCzk: raw.priceCzk != null ? Number(raw.priceCzk) : null,
+        commissionPct: raw.commissionPct != null ? Number(raw.commissionPct) : null,
+        email: String(raw.email),
+        phone: raw.phone ? String(raw.phone) : null,
+        status: "applied",
+        createdAt: now,
+        updatedAt: now,
+      };
+      // attach workspace via hidden field? Use hack: store with projectId but need workspace index; we store workspaceId in provider but type missing; add dynamically
+      (prov as unknown as Record<string, unknown>).workspaceId = workspaceId;
+      (prov as unknown as Record<string, unknown>).projectId = projectId;
+      await this.db!.put("waygoProviders", prov as unknown as WaygoProvider);
+      this.notify();
+      return prov;
+    });
   }
 
   async resetDemoData(): Promise<ServiceResult<null>> {

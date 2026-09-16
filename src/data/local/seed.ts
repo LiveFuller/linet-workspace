@@ -13,7 +13,7 @@ import type {
 import { addDaysDateOnly, localInputToInstant, TZ_PRAGUE } from "@/lib/dates";
 import { DEFAULT_CLOCK } from "@/lib/dates";
 
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
 
 // Deterministic demo IDs (stable across resets).
 const ids = {
@@ -489,11 +489,64 @@ export function buildSeed(now = DEFAULT_CLOCK()) {
     { id: "e6000000-0000-4000-8000-000000000002", taskId: tasks[19].id, meetingId: null, supportTicketId: null, projectId: ids.project, actorId: ids.member4, kind: "task.completed", summary: "Úkol dokončen", detail: null, createdAt: nowIso },
   ];
 
+  // Waygo demo: 8 hotels across lifecycle, with scans/bookings/outreach
+  const waygoHotels = [
+    { id: "w8000000-0000-4000-8000-000000000001", workspaceId: ids.project, projectId: ids.project, name: "Hotel Mirage Praha", slug: "hotel-mirage-praha1", address: "Václavské náměstí 17, Praha 1", area: "Praha 1" as const, stars: 4, rooms: 48, contactName: "Jan Novák", contactEmail: "gm@mirage-prague.cz", contactPhone: "+420 222 111 333", status: "live" as const, commissionHotelPct: 12, commissionReceptionPct: 4, slugQr: "mirage-praha1-x42", ownerId: ids.oliver, notes: "Top performer — lobby tent + personal codes for 2 receptionists", scansTotal: 214, bookingsTotal: 19, revenueCzkTotal: 18420, createdAt: nowIso, updatedAt: nowIso, installedAt: nowIso, liveAt: nowIso },
+    { id: "w8000000-0000-4000-8000-000000000002", workspaceId: ids.project, projectId: ids.project, name: "Grand Hotel Bohemia", slug: "grand-hotel-bohemia", address: "Králodvorská 4, Praha 1", area: "Praha 1" as const, stars: 5, rooms: 78, contactName: "Eva Králová", contactEmail: "eva@bohemia.cz", contactPhone: "+420 234 567 890", status: "installed" as const, commissionHotelPct: 10, commissionReceptionPct: 3, slugQr: "bohemia-p1-k88", ownerId: ids.member1, notes: "QR installed 3 days ago, waiting first bookings", scansTotal: 67, bookingsTotal: 3, revenueCzkTotal: 2100, createdAt: nowIso, updatedAt: nowIso, installedAt: nowIso, liveAt: null },
+    { id: "w8000000-0000-4000-8000-000000000003", workspaceId: ids.project, projectId: ids.project, name: "Prague Central Inn", slug: "prague-central-inn", address: "Jindřišská 12, Praha 1", area: "Praha 1" as const, stars: 3, rooms: 32, contactName: "Petr Dvořák", contactEmail: "info@centralinn.cz", contactPhone: "+420 777 888 999", status: "loi" as const, commissionHotelPct: 10, commissionReceptionPct: 3, slugQr: "central-p1-m21", ownerId: ids.member2, notes: "LOI signed, tent printing queued", scansTotal: 0, bookingsTotal: 0, revenueCzkTotal: 0, createdAt: nowIso, updatedAt: nowIso, installedAt: null, liveAt: null },
+    { id: "w8000000-0000-4000-8000-000000000004", workspaceId: ids.project, projectId: ids.project, name: "Motel Karlín Loft", slug: "motel-karlin-loft", address: "Křižíkova 57, Praha 8", area: "Praha 8" as const, stars: 3, rooms: 24, contactName: "Lucie Svobodová", contactEmail: "reception@karlinloft.cz", contactPhone: "+420 775 112 334", status: "meeting" as const, commissionHotelPct: 11, commissionReceptionPct: 3, slugQr: "karlin-loft-a11", ownerId: ids.oliver, notes: "Meeting booked Tue 11:00", scansTotal: 0, bookingsTotal: 0, revenueCzkTotal: 0, createdAt: nowIso, updatedAt: nowIso, installedAt: null, liveAt: null },
+    { id: "w8000000-0000-4000-8000-000000000005", workspaceId: ids.project, projectId: ids.project, name: "Hotel Union Vinohrady", slug: "hotel-union-vinohrady", address: "Opletalova 23, Praha 2", area: "Praha 2" as const, stars: 4, rooms: 56, contactName: "Martin Horák", contactEmail: "martin@union.cz", contactPhone: "+420 602 345 678", status: "contacted" as const, commissionHotelPct: 10, commissionReceptionPct: 3, slugQr: "union-vinohrady-p2", ownerId: ids.member1, notes: "Cold email sent, no reply 4 days", scansTotal: 0, bookingsTotal: 0, revenueCzkTotal: 0, createdAt: nowIso, updatedAt: nowIso, installedAt: null, liveAt: null },
+    { id: "w8000000-0000-4000-8000-000000000006", workspaceId: ids.project, projectId: ids.project, name: "Hostel Prague Riverside", slug: "hostel-riverside", address: "Náplavka 2, Praha 2", area: "Praha 2" as const, stars: null, rooms: 80, contactName: "Anna K.", contactEmail: "hello@riversidehostel.cz", contactPhone: null, status: "prospect" as const, commissionHotelPct: 13, commissionReceptionPct: 4, slugQr: "riverside-p2-z09", ownerId: null, notes: "Prospect from Google Maps, 4.6 stars, 120 reviews", scansTotal: 0, bookingsTotal: 0, revenueCzkTotal: 0, createdAt: nowIso, updatedAt: nowIso, installedAt: null, liveAt: null },
+    { id: "w8000000-0000-4000-8000-000000000007", workspaceId: ids.project, projectId: ids.project, name: "Design Hotel Jewel", slug: "design-hotel-jewel", address: "Pařížská 18, Praha 1", area: "Praha 1" as const, stars: 5, rooms: 62, contactName: "Sofia Meyer", contactEmail: "sofia@jewel.cz", contactPhone: "+420 221 040 000", status: "live" as const, commissionHotelPct: 9, commissionReceptionPct: 3, slugQr: "jewel-parizska-t33", ownerId: ids.oliver, notes: "German guests heavy, DE flyer requested", scansTotal: 142, bookingsTotal: 11, revenueCzkTotal: 9870, createdAt: nowIso, updatedAt: nowIso, installedAt: nowIso, liveAt: nowIso },
+    { id: "w8000000-0000-4000-8000-000000000008", workspaceId: ids.project, projectId: ids.project, name: "Hotel Churned Example", slug: "hotel-churned-example", address: "Test 1, Praha 9", area: "Celá Praha" as const, stars: 3, rooms: 18, contactName: "Old Contact", contactEmail: "old@churn.cz", contactPhone: null, status: "churned" as const, commissionHotelPct: 10, commissionReceptionPct: 3, slugQr: "churned-x99", ownerId: ids.member2, notes: "Removed tent after 2 months low traffic", scansTotal: 12, bookingsTotal: 0, revenueCzkTotal: 0, createdAt: nowIso, updatedAt: nowIso, installedAt: nowIso, liveAt: null },
+  ];
+
+  const waygoCodes = [
+    { id: "w9000000-0000-4000-8000-000000000001", hotelId: waygoHotels[0].id, code: "A42", displayName: "Recepce / Front desk", slug: `${waygoHotels[0].slug}-a42`, type: "hotel_shared" as const, personName: null, scansTotal: 120, bookingsTotal: 9, revenueCzkTotal: 8900, createdAt: nowIso, updatedAt: nowIso },
+    { id: "w9000000-0000-4000-8000-000000000002", hotelId: waygoHotels[0].id, code: "P07", displayName: "Petra - reception", slug: `${waygoHotels[0].slug}-p07`, type: "personal" as const, personName: "Petra", scansTotal: 94, bookingsTotal: 10, revenueCzkTotal: 9520, createdAt: nowIso, updatedAt: nowIso },
+    { id: "w9000000-0000-4000-8000-000000000003", hotelId: waygoHotels[1].id, code: "B88", displayName: "Recepce / Front desk", slug: `${waygoHotels[1].slug}-b88`, type: "hotel_shared" as const, personName: null, scansTotal: 67, bookingsTotal: 3, revenueCzkTotal: 2100, createdAt: nowIso, updatedAt: nowIso },
+    { id: "w9000000-0000-4000-8000-000000000004", hotelId: waygoHotels[6].id, code: "S33", displayName: "Recepce / Front desk", slug: `${waygoHotels[6].slug}-s33`, type: "hotel_shared" as const, personName: null, scansTotal: 80, bookingsTotal: 6, revenueCzkTotal: 5400, createdAt: nowIso, updatedAt: nowIso },
+    { id: "w9000000-0000-4000-8000-000000000005", hotelId: waygoHotels[6].id, code: "M12", displayName: "Marek - night shift", slug: `${waygoHotels[6].slug}-m12`, type: "personal" as const, personName: "Marek", scansTotal: 62, bookingsTotal: 5, revenueCzkTotal: 4470, createdAt: nowIso, updatedAt: nowIso },
+  ];
+
+  const waygoScans = Array.from({ length: 24 }, (_, i) => ({
+    id: `wa000000-0000-4000-8000-${String(i).padStart(12,"0")}`,
+    hotelId: i % 2 === 0 ? waygoHotels[0].id : waygoHotels[6].id,
+    codeId: i % 3 === 0 ? waygoCodes[1].id : waygoCodes[0].id,
+    slug: i % 2 === 0 ? waygoHotels[0].slugQr : waygoCodes[3].slug,
+    scannedAt: new Date(Date.now() - i * 3600_000 * 3).toISOString(),
+    ipHash: null,
+    userAgent: "Mozilla/5.0",
+    referrer: null,
+    convertedToBooking: i < 6,
+    country: i % 4 === 0 ? "DE" : i % 4 === 1 ? "US" : "CZ",
+  }));
+
+  const waygoBookings = [
+    { id: "wb000000-0000-4000-8000-000000000001", hotelId: waygoHotels[0].id, codeId: waygoCodes[0].id, slug: waygoHotels[0].slugQr, experienceSlug: "prague-essentials-private-tour", experienceTitle: "Prague Essentials: Castle, Bridge & Old Town", amountCzk: 7031, commissionCzk: 843, guestCountry: "DE", status: "confirmed" as const, bookedAt: new Date(Date.now() - 1000*3600*5).toISOString(), createdAt: nowIso },
+    { id: "wb000000-0000-4000-8000-000000000002", hotelId: waygoHotels[0].id, codeId: waygoCodes[1].id, slug: waygoCodes[1].slug, experienceSlug: "hidden-prague-tour", experienceTitle: "Hidden Prague & Old Town Passages", amountCzk: 4607, commissionCzk: 552, guestCountry: "US", status: "confirmed" as const, bookedAt: new Date(Date.now() - 1000*3600*12).toISOString(), createdAt: nowIso },
+    { id: "wb000000-0000-4000-8000-000000000003", hotelId: waygoHotels[6].id, codeId: waygoCodes[3].id, slug: waygoCodes[3].slug, experienceSlug: "ghost-tour-prague", experienceTitle: "Ghosts, Legends & Dark Secrets", amountCzk: 5334, commissionCzk: 480, guestCountry: "GB", status: "confirmed" as const, bookedAt: new Date(Date.now() - 1000*3600*20).toISOString(), createdAt: nowIso },
+    { id: "wb000000-0000-4000-8000-000000000004", hotelId: waygoHotels[0].id, codeId: waygoCodes[1].id, slug: waygoCodes[1].slug, experienceSlug: "prague-photography-tour", experienceTitle: "Prague Photography Walk", amountCzk: 5576, commissionCzk: 669, guestCountry: "DE", status: "confirmed" as const, bookedAt: new Date(Date.now() - 1000*3600*30).toISOString(), createdAt: nowIso },
+    { id: "wb000000-0000-4000-8000-000000000005", hotelId: waygoHotels[1].id, codeId: waygoCodes[2].id, slug: waygoCodes[2].slug, experienceSlug: "jewish-prague-private-tour", experienceTitle: "Jewish Prague Private Tour", amountCzk: 5819, commissionCzk: 523, guestCountry: "US", status: "pending" as const, bookedAt: new Date(Date.now() - 1000*3600*2).toISOString(), createdAt: nowIso },
+  ];
+
+  const waygoOutreach = [
+    { id: "wo000000-0000-4000-8000-000000000001", hotelId: waygoHotels[4].id, kind: "email" as const, subject: "Waygo pro Hotel Union — 12% z každé rezervace hosta", body: "Dobrý den pane Horáku,\n\n hosté z Hotelu Union denně hledají co dělat v Praze. Waygo jim dá kurátorský katalog (procházky, lodě, gastronomie) — na jejich telefonu, bez práce pro recepci.\n QR stojánek na pult, vy inkasujete podíl od první rezervace. Schůzka 15 minut, ukážeme live.\n\n Můžeme v úterý 11:00?", aiDraft: null, outcome: null, nextFollowUpAt: at(3), createdBy: ids.oliver, createdAt: nowIso, updatedAt: nowIso },
+    { id: "wo000000-0000-4000-8000-000000000002", hotelId: waygoHotels[3].id, kind: "call" as const, subject: "Call — Motel Karlín Loft", body: "Voláno 08.09., domluvena schůzka úterý 11:00 s Lucií.", aiDraft: null, outcome: "meeting booked", nextFollowUpAt: at(1), createdBy: ids.member1, createdAt: nowIso, updatedAt: nowIso },
+    { id: "wo000000-0000-4000-8000-000000000003", hotelId: waygoHotels[5].id, kind: "note" as const, subject: "Prospect poznámka — Riverside", body: "Prospect: 80 lůžek, mladí hosté, hodí se adventury + food. Příště e-mail s DE verzí.", aiDraft: "Hi Riverside team, your guests ask daily 'what to do in Prague?' — Waygo answers it...", outcome: null, nextFollowUpAt: at(5), createdBy: ids.member2, createdAt: nowIso, updatedAt: nowIso },
+  ];
+
+  const waygoProviders = [
+    { id: "wp000000-0000-4000-8000-000000000001", workspaceId: ids.project, projectId: ids.project, businessName: "Prague Walks s.r.o.", ico: "12345678", category: "Guided Tour / River", address: "Celetná 12, Praha 1", area: "Praha 1" as const, priceCzk: 7031, commissionPct: 12, email: "info@praguewalks.cz", phone: "+420 777 111 222", status: "approved" as const, createdAt: nowIso, updatedAt: nowIso },
+    { id: "wp000000-0000-4000-8000-000000000002", workspaceId: ids.project, projectId: ids.project, businessName: "Food Prague Tours", ico: "87654321", category: "Food & Dining", address: "Dlouhá 8, Praha 1", area: "Praha 1" as const, priceCzk: 3200, commissionPct: 15, email: "hello@foodprague.cz", phone: "+420 775 333 444", status: "vetting" as const, createdAt: nowIso, updatedAt: nowIso },
+  ];
+
   return {
     people, project, workstreams, labels, tasks, checklist, comments, templates,
     events, inbox, meetings, transcriptSegments, proposals, decisions, reports,
     schedules, modules, trainingProgress, supportTickets, supportUpdates,
     documents, notifications, activity,
+    waygoHotels, waygoCodes, waygoScans, waygoBookings, waygoOutreach, waygoProviders,
     referenceDate: T,
   };
 }

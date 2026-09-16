@@ -5,6 +5,7 @@ import {
   Bell, CalendarDays, CheckSquare, GraduationCap, Home, LayoutGrid,
   LifeBuoy, LineChart, FolderOpen, Plug, Search, Settings,
   Users, Inbox as InboxIcon, Menu, Plus, Command, Sparkles,
+  QrCode, Building2, Send,
 } from "lucide-react";
 import { useApp } from "@/app/AppProvider";
 import { useToast } from "@/components/Toaster";
@@ -122,6 +123,9 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
 
   const items = useMemo(() => {
     const all = [
+      { label: "Waygo Owner", desc: "Owner dashboard / QR metrics", icon: QrCode, to: "/waygo", keys: "g w" },
+      { label: "Waygo Hotely", desc: "Hotely & QR kódy", icon: Building2, to: "/waygo/hotels", keys: "g h" },
+      { label: "Waygo Outreach", desc: "Pipeline & AI drafts", icon: Send, to: "/waygo/outreach", keys: "g o" },
       { label: t.add_task, desc: "Vytvořit úkol", icon: CheckSquare, to: "/tasks/new", keys: "t" },
       { label: t.nav_tasks, desc: "Zobrazit úkoly", icon: CheckSquare, to: "/tasks", keys: "g t" },
       { label: t.nav_calendar, desc: "Kalendář / agenda", icon: CalendarDays, to: "/calendar", keys: "g c" },
@@ -254,9 +258,9 @@ function BottomNav() {
           <Home size={20} aria-hidden />
           <span>{t.nav_today}</span>
         </NavLink>
-        <NavLink to="/tasks">
-          <CheckSquare size={20} aria-hidden />
-          <span>{t.nav_tasks}</span>
+        <NavLink to="/waygo">
+          <QrCode size={20} aria-hidden />
+          <span>Waygo</span>
         </NavLink>
         <button
           onClick={() => setShowAdd(true)}
@@ -292,6 +296,10 @@ function Sidebar() {
       <NavLink to="/" end><Home size={18} aria-hidden /> {t.nav_today}</NavLink>
       <NavLink to="/tasks"><CheckSquare size={18} aria-hidden /> {t.nav_tasks}</NavLink>
       <NavLink to="/inbox"><InboxIcon size={18} aria-hidden /> {t.nav_inbox}</NavLink>
+      <div className="sidebar-group-label" style={{ display: "flex", alignItems: "center", gap: 6 }}><QrCode size={12} /> WAYGO</div>
+      <NavLink to="/waygo" style={({ isActive }) => isActive ? { background: "var(--brand)", color: "#fff" } : undefined}><QrCode size={18} aria-hidden /> Owner dashboard</NavLink>
+      <NavLink to="/waygo/hotels"><Building2 size={18} aria-hidden /> Hotely & QR</NavLink>
+      <NavLink to="/waygo/outreach"><Send size={18} aria-hidden /> Outreach</NavLink>
       <div className="sidebar-group-label">{t.nav_group_coord}</div>
       <NavLink to="/calendar"><CalendarDays size={18} aria-hidden /> {t.nav_calendar}</NavLink>
       <NavLink to="/meetings"><LayoutGrid size={18} aria-hidden /> {t.nav_meetings}</NavLink>

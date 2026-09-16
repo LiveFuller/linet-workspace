@@ -64,6 +64,16 @@ class MissingConfigRepository implements WorkspaceRepository {
   markAllNotificationsRead() { return this.op() as never; }
   exportBackup() { return this.op() as never; }
   resetDemoData() { return this.op() as never; }
+  createWaygoHotel() { return this.op() as never; }
+  updateWaygoHotel() { return this.op() as never; }
+  deleteWaygoHotel() { return this.op() as never; }
+  createWaygoCode() { return this.op() as never; }
+  deleteWaygoCode() { return this.op() as never; }
+  recordWaygoScan() { return this.op() as never; }
+  createWaygoBooking() { return this.op() as never; }
+  createWaygoOutreach() { return this.op() as never; }
+  updateWaygoOutreach() { return this.op() as never; }
+  createWaygoProvider() { return this.op() as never; }
   integrationStatuses() {
     return [
       { id: "supabase" as const, state: "not_configured" as const, operations: [], lastCheck: null, message: this.msg },

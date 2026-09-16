@@ -8,6 +8,9 @@ import type {
   Task, TaskChecklistItem, TaskComment, TaskTemplate, TrainingModule,
   TrainingProgress, TranscriptSegment, UUID, Workstream,
 } from "@/domain/types";
+import type {
+  WaygoHotel, WaygoReceptionCode, WaygoScan, WaygoBooking, WaygoOutreach, WaygoProvider,
+} from "@/domain/waygo";
 import type { TaskDraft, TaskUpdate } from "@/domain/validation";
 
 export interface SnapshotListener {
@@ -40,6 +43,13 @@ export interface DataSnapshot {
   documents: DocumentRecord[];
   notifications: Notification[];
   activity: ActivityEvent[];
+  // Waygo engine
+  waygoHotels: WaygoHotel[];
+  waygoCodes: WaygoReceptionCode[];
+  waygoScans: WaygoScan[];
+  waygoBookings: WaygoBooking[];
+  waygoOutreach: WaygoOutreach[];
+  waygoProviders: WaygoProvider[];
 }
 
 export interface WorkspaceRepository {
@@ -134,6 +144,18 @@ export interface WorkspaceRepository {
   // ---- Backup / demo lifecycle ----
   exportBackup(): Promise<ServiceResult<BackupPayload>>;
   resetDemoData(): Promise<ServiceResult<null>>;
+
+  // ---- Waygo ----
+  createWaygoHotel(input: unknown, actorId: UUID): Promise<ServiceResult<WaygoHotel>>;
+  updateWaygoHotel(id: string, patch: Partial<WaygoHotel>, actorId: UUID): Promise<ServiceResult<WaygoHotel>>;
+  deleteWaygoHotel(id: string, actorId: UUID): Promise<ServiceResult<null>>;
+  createWaygoCode(input: unknown, actorId: UUID): Promise<ServiceResult<WaygoReceptionCode>>;
+  deleteWaygoCode(id: string, actorId: UUID): Promise<ServiceResult<null>>;
+  recordWaygoScan(slug: string, meta: { ipHash?: string | null; userAgent?: string | null; referrer?: string | null; country?: string | null }): Promise<ServiceResult<WaygoScan>>;
+  createWaygoBooking(input: { hotelId: string; codeId?: string | null; slug: string; experienceTitle: string; amountCzk: number; guestCountry?: string | null }, actorId: UUID): Promise<ServiceResult<WaygoBooking>>;
+  createWaygoOutreach(input: unknown, actorId: UUID): Promise<ServiceResult<WaygoOutreach>>;
+  updateWaygoOutreach(id: string, patch: Partial<WaygoOutreach>, actorId: UUID): Promise<ServiceResult<WaygoOutreach>>;
+  createWaygoProvider(input: unknown, actorId: UUID): Promise<ServiceResult<WaygoProvider>>;
 
   // ---- Integration capability reporting (no secrets) ----
   integrationStatuses(): IntegrationStatus[];

@@ -7,9 +7,12 @@ import type {
   TaskComment, TaskTemplate, TrainingModule, TrainingProgress, TranscriptSegment,
   Workstream,
 } from "@/domain/types";
+import type {
+  WaygoHotel, WaygoReceptionCode, WaygoScan, WaygoBooking, WaygoOutreach, WaygoProvider,
+} from "@/domain/waygo";
 
 const DB_NAME = "linet-workspace";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export interface WorkspaceDBSchema extends DBSchema {
   meta: { key: string; value: { key: string; value: unknown } };
@@ -37,6 +40,13 @@ export interface WorkspaceDBSchema extends DBSchema {
   notifications: { key: string; value: Notification; indexes: { "by-person": string } };
   activity: { key: string; value: ActivityEvent; indexes: { "by-project": string } };
   attachments: { key: string; value: { id: string; parentId: string; name: string; mime: string; size: number; blob: Blob } };
+  // Waygo engine
+  waygoHotels: { key: string; value: WaygoHotel; indexes: { "by-project": string; "by-slug": string } };
+  waygoCodes: { key: string; value: WaygoReceptionCode; indexes: { "by-hotel": string; "by-slug": string } };
+  waygoScans: { key: string; value: WaygoScan; indexes: { "by-hotel": string; "by-slug": string } };
+  waygoBookings: { key: string; value: WaygoBooking; indexes: { "by-hotel": string } };
+  waygoOutreach: { key: string; value: WaygoOutreach; indexes: { "by-hotel": string; "by-project": string } };
+  waygoProviders: { key: string; value: WaygoProvider; indexes: { "by-project": string } };
 }
 
 export type AppDB = IDBPDatabase<WorkspaceDBSchema>;
@@ -46,15 +56,15 @@ let dbPromise: Promise<AppDB> | null = null;
 export function openWorkspaceDB(): Promise<AppDB> {
   if (!dbPromise) {
     dbPromise = openDB<WorkspaceDBSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        const create = (name: string, index?: { name: string; keyPath: string }) => {
+      upgrade(db, _oldVersion) {
+        const create = (name: string, index?: { name: string; keyPath: string }, extraIndex?: { name: string; keyPath: string }) => {
           if (!db.objectStoreNames.contains(name as never)) {
-            // idb's typing requires a literal store name; all listed stores share keyPath "id".
             const store = db.createObjectStore(name as "people", { keyPath: "id" });
             if (index) store.createIndex(index.name as "by-project" as never, index.keyPath);
+            if (extraIndex) store.createIndex(extraIndex.name as never, extraIndex.keyPath);
           }
         };
-        db.createObjectStore("meta");
+        if (!db.objectStoreNames.contains("meta")) db.createObjectStore("meta");
         create("people");
         create("projects", { name: "by-project", keyPath: "projectId" });
         create("workstreams", { name: "by-project", keyPath: "projectId" });
@@ -83,6 +93,35 @@ export function openWorkspaceDB(): Promise<AppDB> {
         if (!db.objectStoreNames.contains("attachments")) {
           db.createObjectStore("attachments", { keyPath: "id" });
         }
+        // Waygo v2 stores
+        if (!db.objectStoreNames.contains("waygoHotels")) {
+          const s = db.createObjectStore("waygoHotels", { keyPath: "id" });
+          s.createIndex("by-project", "projectId");
+          s.createIndex("by-slug", "slug");
+        }
+        if (!db.objectStoreNames.contains("waygoCodes")) {
+          const s = db.createObjectStore("waygoCodes", { keyPath: "id" });
+          s.createIndex("by-hotel", "hotelId");
+          s.createIndex("by-slug", "slug");
+        }
+        if (!db.objectStoreNames.contains("waygoScans")) {
+          const s = db.createObjectStore("waygoScans", { keyPath: "id" });
+          s.createIndex("by-hotel", "hotelId");
+          s.createIndex("by-slug", "slug");
+        }
+        if (!db.objectStoreNames.contains("waygoBookings")) {
+          const s = db.createObjectStore("waygoBookings", { keyPath: "id" });
+          s.createIndex("by-hotel", "hotelId");
+        }
+        if (!db.objectStoreNames.contains("waygoOutreach")) {
+          const s = db.createObjectStore("waygoOutreach", { keyPath: "id" });
+          s.createIndex("by-hotel", "hotelId");
+          s.createIndex("by-project", "projectId");
+        }
+        if (!db.objectStoreNames.contains("waygoProviders")) {
+          const s = db.createObjectStore("waygoProviders", { keyPath: "id" });
+          s.createIndex("by-project", "projectId");
+        }
       },
       blocked() { /* another tab holds an older version; will upgrade when it closes */ },
     });
@@ -95,6 +134,7 @@ export const STORES = [
   "templates", "events", "inbox", "meetings", "transcripts", "proposals", "decisions",
   "reports", "schedules", "modules", "trainingProgress", "supportTickets",
   "supportUpdates", "documents", "notifications", "activity", "attachments",
+  "waygoHotels", "waygoCodes", "waygoScans", "waygoBookings", "waygoOutreach", "waygoProviders",
 ] as const;
 
 export type StoreName = (typeof STORES)[number];

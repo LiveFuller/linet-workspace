@@ -128,6 +128,44 @@ export const trainingProgressSchema = z.object({
   checklistDone: z.array(z.string().max(60)).max(40),
 });
 
+export const waygoHotelStatusSchema = z.enum(["prospect","contacted","meeting","loi","installed","live","churned"]);
+export const waygoAreaSchema = z.enum(["Praha 1","Praha 2","Praha 3","Praha 4","Praha 5","Praha 6","Praha 7","Praha 8","Celá Praha"]);
+
+export const waygoHotelDraftSchema = z.object({
+  projectId: uuidSchema,
+  name: z.string().trim().min(2).max(120),
+  address: z.string().trim().max(300).default(""),
+  area: waygoAreaSchema.default("Praha 1"),
+  stars: z.number().int().min(1).max(5).nullable().default(null),
+  rooms: z.number().int().min(1).max(5000).nullable().default(null),
+  contactName: z.string().trim().max(120).nullable().default(null),
+  contactEmail: z.string().email().nullable().or(z.literal("")).transform(v=> v===""?null:v).nullable().default(null),
+  contactPhone: z.string().trim().max(30).nullable().default(null),
+  status: waygoHotelStatusSchema.default("prospect"),
+  commissionHotelPct: z.number().min(0).max(30).default(10),
+  commissionReceptionPct: z.number().min(0).max(20).default(3),
+  ownerId: uuidSchema.nullable().default(null),
+  notes: z.string().max(3000).nullable().default(null),
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+){1,5}$/).min(6).max(40).nullable().default(null),
+});
+
+export const waygoReceptionCodeDraftSchema = z.object({
+  hotelId: uuidSchema,
+  displayName: z.string().trim().min(2).max(80),
+  type: z.enum(["hotel_shared","personal"]).default("hotel_shared"),
+  personName: z.string().trim().max(80).nullable().default(null),
+  code: z.string().regex(/^[A-Z][0-9]{2,3}$/).nullable().default(null),
+});
+
+export const waygoOutreachDraftSchema = z.object({
+  hotelId: uuidSchema,
+  kind: z.enum(["email","call","visit","follow_up","note"]).default("email"),
+  subject: z.string().trim().min(1).max(200),
+  body: z.string().trim().min(1).max(6000),
+  outcome: z.string().max(500).nullable().default(null),
+  nextFollowUpAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().default(null),
+});
+
 export function zodIssuesToServiceError(err: z.ZodError): {
   ok: false;
   error: { code: "validation"; issues: { path: string; message: string }[] };
