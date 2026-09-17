@@ -25,7 +25,8 @@ createRoot(document.getElementById("root")!).render(
 // Register service worker (production only, scope derived from basename)
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register(`${basename}/sw.js`, { scope: `${basename}/` }).catch(() => {
+    const scope = basename === "/" ? "/" : `${basename}/`;
+    navigator.serviceWorker.register(`${scope}sw.js`, { scope }).catch(() => {
       /* best-effort — offline is optional */
     });
   });
