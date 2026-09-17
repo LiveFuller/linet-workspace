@@ -4,13 +4,13 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   Bell, CalendarDays, CheckSquare, GraduationCap, Home, LayoutGrid,
   LifeBuoy, LineChart, FolderOpen, Plug, Search, Settings,
-  Users, Inbox as InboxIcon, Menu, Plus, Command, Sparkles,
+  Users, Inbox as InboxIcon, Menu, Plus, Sparkles,
   QrCode, Building2, Send,
 } from "lucide-react";
 import { useApp } from "@/app/AppProvider";
 import { useToast } from "@/components/Toaster";
 import { Modal } from "@/components/Modal";
-import { modeLocalLabel } from "./shellLabels";
+import { modeLocalLabel, workspaceLabels } from "./shellLabels";
 
 function NotificationsModal({ onClose }: { onClose: () => void }) {
   const { snapshot, persona, repo, t, refresh } = useApp();
@@ -249,16 +249,17 @@ function TopBar() {
 }
 
 function BottomNav() {
-  const { t } = useApp();
+  const { t, prefs } = useApp();
+  const labels = workspaceLabels[prefs.locale];
   const [showAdd, setShowAdd] = useState(false);
   return (
     <>
       <nav className="bottom-nav" aria-label={t.appName}>
         <NavLink to="/" end>
           <Home size={20} aria-hidden />
-          <span>{t.nav_today}</span>
+          <span>{labels.myWork}</span>
         </NavLink>
-        <NavLink to="/waygo">
+        <NavLink to="/waygo" end>
           <QrCode size={20} aria-hidden />
           <span>Waygo</span>
         </NavLink>
@@ -284,7 +285,8 @@ function BottomNav() {
 }
 
 function Sidebar() {
-  const { t } = useApp();
+  const { t, prefs } = useApp();
+  const labels = workspaceLabels[prefs.locale];
   return (
     <nav className="sidebar" aria-label={t.appName}>
       <div className="brand-block">
@@ -292,32 +294,23 @@ function Sidebar() {
         <span className="brand-word">LINET</span>
         <span className="brand-sub">Workspace</span>
       </div>
-      <div className="sidebar-group-label">{t.nav_group_daily}</div>
+      <div className="sidebar-group-label">{labels.myWork}</div>
       <NavLink to="/" end><Home size={18} aria-hidden /> {t.nav_today}</NavLink>
       <NavLink to="/tasks"><CheckSquare size={18} aria-hidden /> {t.nav_tasks}</NavLink>
       <NavLink to="/inbox"><InboxIcon size={18} aria-hidden /> {t.nav_inbox}</NavLink>
-      <div className="sidebar-group-label" style={{ display: "flex", alignItems: "center", gap: 6 }}><QrCode size={12} /> WAYGO</div>
-      <NavLink to="/waygo" style={({ isActive }) => isActive ? { background: "var(--brand)", color: "#fff" } : undefined}><QrCode size={18} aria-hidden /> Owner dashboard</NavLink>
-      <NavLink to="/waygo/hotels"><Building2 size={18} aria-hidden /> Hotely & QR</NavLink>
-      <NavLink to="/waygo/outreach"><Send size={18} aria-hidden /> Outreach</NavLink>
-      <div className="sidebar-group-label">{t.nav_group_coord}</div>
+      <div className="sidebar-group-label">{labels.project}</div>
+      <NavLink to="/waygo" end><QrCode size={18} aria-hidden /> Waygo</NavLink>
       <NavLink to="/calendar"><CalendarDays size={18} aria-hidden /> {t.nav_calendar}</NavLink>
       <NavLink to="/meetings"><LayoutGrid size={18} aria-hidden /> {t.nav_meetings}</NavLink>
+      <div className="sidebar-group-label">{t.nav_group_coord}</div>
       <NavLink to="/reports"><LineChart size={18} aria-hidden /> {t.nav_reports}</NavLink>
       <NavLink to="/team"><Users size={18} aria-hidden /> {t.nav_team}</NavLink>
-      <div className="sidebar-group-label">{t.nav_group_learn}</div>
+      <div className="sidebar-group-label">{labels.tools}</div>
       <NavLink to="/learning"><GraduationCap size={18} aria-hidden /> {t.nav_learning}</NavLink>
       <NavLink to="/support"><LifeBuoy size={18} aria-hidden /> {t.nav_support}</NavLink>
       <NavLink to="/documents"><FolderOpen size={18} aria-hidden /> {t.nav_documents}</NavLink>
-      <div className="sidebar-group-label">{t.nav_group_admin}</div>
       <NavLink to="/integrations"><Plug size={18} aria-hidden /> {t.nav_integrations}</NavLink>
       <NavLink to="/settings"><Settings size={18} aria-hidden /> {t.nav_settings}</NavLink>
-      <div style={{ marginTop: 18, padding: "12px 10px", background: "var(--brand-ghost)", borderRadius: "var(--radius-m)", border: "1px solid var(--brand-soft-strong)" }}>
-        <div className="xsmall" style={{ fontWeight: 700, color: "var(--brand-ink)", display: "flex", alignItems: "center", gap: 6 }}>
-          <Command size={14} aria-hidden /> Tip: ⌘K
-        </div>
-        <div className="xsmall muted" style={{ marginTop: 4, lineHeight: 1.45 }}>Rychlé příkazy, hledání a navigace odkudkoli.</div>
-      </div>
     </nav>
   );
 }
